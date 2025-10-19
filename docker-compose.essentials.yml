@@ -1,0 +1,195 @@
+version: '3.8'
+
+# Mini Commerce MSA - 필수 서비스만 실행
+# =====================================
+# Docker, Python, Go, Java, Node.js로 구동되는 핵심 서비스들
+
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mini-commerce-postgres
+    environment:
+      POSTGRES_DB: mini_commerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - mini-commerce-network
+    restart: unless-stopped
+
+  # Auth Service (Node.js)
+  auth-service:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    container_name: mini-commerce-auth
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - JWT_SECRET=your-super-secret-jwt-key-here
+      - JWT_EXPIRES_IN=24h
+    ports:
+      - "3001:3001"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Catalog Service (Python)
+  catalog-service:
+    build:
+      context: ./services/catalog
+      dockerfile: Dockerfile
+    container_name: mini-commerce-catalog
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - PORT=3002
+    ports:
+      - "3002:3002"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Cart Service (Go)
+  cart-service:
+    build:
+      context: ./services/cart
+      dockerfile: Dockerfile
+    container_name: mini-commerce-cart
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - PORT=3003
+    ports:
+      - "3003:3003"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Order Service (Java)
+  order-service:
+    build:
+      context: ./services/order
+      dockerfile: Dockerfile
+    container_name: mini-commerce-order
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - PORT=3004
+    ports:
+      - "3004:3004"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Inventory Service (Go)
+  inventory-service:
+    build:
+      context: ./services/inventory
+      dockerfile: Dockerfile
+    container_name: mini-commerce-inventory
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - PORT=3005
+    ports:
+      - "3005:3005"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Payment Service (Node.js)
+  payment-service:
+    build:
+      context: ./services/payment-mock
+      dockerfile: Dockerfile
+    container_name: mini-commerce-payment
+    environment:
+      - PORT=3006
+    ports:
+      - "3006:3006"
+    networks:
+      - mini-commerce-network
+    restart: unless-stopped
+
+  # Notification Service (Python)
+  notification-service:
+    build:
+      context: ./services/notification
+      dockerfile: Dockerfile
+    container_name: mini-commerce-notification
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - PORT=3007
+    ports:
+      - "3007:3007"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # API Gateway (Node.js)
+  gateway-service:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: mini-commerce-gateway
+    environment:
+      - NODE_ENV=development
+      - PORT=8080
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - CATALOG_SERVICE_URL=http://catalog-service:3002
+      - CART_SERVICE_URL=http://cart-service:3003
+      - ORDER_SERVICE_URL=http://order-service:3004
+      - INVENTORY_SERVICE_URL=http://inventory-service:3005
+      - PAYMENT_SERVICE_URL=http://payment-service:3006
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3007
+    ports:
+      - "8080:8080"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - auth-service
+      - catalog-service
+      - cart-service
+      - order-service
+      - inventory-service
+      - payment-service
+      - notification-service
+    restart: unless-stopped
+
+  # Frontend (Node.js/React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mini-commerce-frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+    ports:
+      - "3000:80"
+    networks:
+      - mini-commerce-network
+    depends_on:
+      - gateway-service
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  mini-commerce-network:
+    driver: bridge
