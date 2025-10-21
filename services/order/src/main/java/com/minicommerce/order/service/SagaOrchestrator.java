@@ -125,8 +125,8 @@ public class SagaOrchestrator {
         sendOrderNotification(order, "Order completed successfully");
         
         // Update saga state
-        order.setSagaState(SagaState.COMPLETED);
-        order.setStatus(OrderStatus.COMPLETED);
+        order.setSagaState(SagaState.completed);
+        order.setStatus(OrderStatus.completed);
         orderRepository.save(order);
         
         logger.info("Order saga completed successfully for order: {}", order.getId());
@@ -235,7 +235,7 @@ public class SagaOrchestrator {
                 publishEvent(new OrderCompletedEvent(
                     order.getId(),
                     order.getUserId(),
-                    OrderStatus.COMPLETED
+                    OrderStatus.completed
                 ));
             })
             .doOnError(error -> {
@@ -305,8 +305,8 @@ public class SagaOrchestrator {
         logger.error("Saga failed for order: {}, reason: {}", order.getId(), reason);
         
         // Update order status
-        order.setStatus(OrderStatus.FAILED);
-        order.setSagaState(SagaState.FAILED);
+        order.setStatus(OrderStatus.failed);
+        order.setSagaState(SagaState.failed);
         orderRepository.save(order);
         
         // Publish order failed event
@@ -314,7 +314,7 @@ public class SagaOrchestrator {
             order.getId(),
             order.getUserId(),
             reason,
-            SagaState.FAILED
+            SagaState.failed
         ));
         
         // Send failure notification

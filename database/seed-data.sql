@@ -7,7 +7,8 @@
 INSERT INTO auth_service.users (id, email, password_hash, first_name, last_name, phone) VALUES
 ('550e8400-e29b-41d4-a716-446655440001', 'john.doe@example.com', '$2b$10$rQZ8K9vL3mN4pQ5rS6tU7uV8wX9yZ0aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3', 'John', 'Doe', '+1234567890'),
 ('550e8400-e29b-41d4-a716-446655440002', 'jane.smith@example.com', '$2b$10$rQZ8K9vL3mN4pQ5rS6tU7uV8wX9yZ0aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3', 'Jane', 'Smith', '+1234567891'),
-('550e8400-e29b-41d4-a716-446655440003', 'bob.wilson@example.com', '$2b$10$rQZ8K9vL3mN4pQ5rS6tU7uV8wX9yZ0aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3', 'Bob', 'Wilson', '+1234567892');
+('550e8400-e29b-41d4-a716-446655440003', 'bob.wilson@example.com', '$2b$10$rQZ8K9vL3mN4pQ5rS6tU7uV8wX9yZ0aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3', 'Bob', 'Wilson', '+1234567892'),
+('550e8400-e29b-41d4-a716-446655440004', 'demo@example.com', '$2b$12$ffeYhJLfBjShGKxtlOW8y.n1.bRTBZ/CH.e2uA77VGovSb1ruhWy6', 'Demo', 'User', '+1234567893');
 
 -- =============================================
 -- CATALOG SERVICE - Sample Products
@@ -21,7 +22,7 @@ INSERT INTO catalog_service.products (id, name, description, price, image_url, c
 ('650e8400-e29b-41d4-a716-446655440006', 'Adidas Ultraboost 22', 'High-performance running shoes', 180.00, 'https://example.com/images/adidasultraboost22.jpg', 'Fashion', 'Adidas', 'ADU22-WHT-9'),
 ('650e8400-e29b-41d4-a716-446655440007', 'Dell XPS 13', 'Ultrabook with Intel i7', 1199.99, 'https://example.com/images/dellxps13.jpg', 'Computers', 'Dell', 'DXP13-I7-512'),
 ('650e8400-e29b-41d4-a716-446655440008', 'Canon EOS R6', 'Professional mirrorless camera', 2499.99, 'https://example.com/images/canoneosr6.jpg', 'Electronics', 'Canon', 'CAN-R6-BODY'),
-('650e8400-e29b-41d4-a716-446655440009', 'Levi\'s 501 Jeans', 'Classic straight-fit jeans', 89.99, 'https://example.com/images/levis501.jpg', 'Fashion', 'Levi\'s', 'LEV501-BLU-32'),
+('650e8400-e29b-41d4-a716-446655440009', 'Levi''s 501 Jeans', 'Classic straight-fit jeans', 89.99, 'https://example.com/images/levis501.jpg', 'Fashion', 'Levi''s', 'LEV501-BLU-32'),
 ('650e8400-e29b-41d4-a716-446655440010', 'iPad Pro 12.9"', 'Professional tablet with M2 chip', 1099.99, 'https://example.com/images/ipadpro129.jpg', 'Electronics', 'Apple', 'IPADPRO-128');
 
 -- =============================================
@@ -69,7 +70,7 @@ INSERT INTO order_service.order_items (order_id, product_id, product_name, quant
 ('850e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440005', 'Sony WH-1000XM5', 1, 399.99, 399.99),
 -- Order 2 items
 ('850e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440003', 'MacBook Air M3', 1, 1299.99, 1299.99),
-('850e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440009', 'Levi\'s 501 Jeans', 2, 89.99, 179.98);
+('850e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440009', 'Levi''s 501 Jeans', 2, 89.99, 179.98);
 
 -- =============================================
 -- PAYMENT SERVICE - Sample Transactions

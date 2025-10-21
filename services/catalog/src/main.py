@@ -10,7 +10,7 @@ from typing import List, Optional
 import asyncio
 
 from database.connection import get_database
-from models.product import Product, ProductCreate, ProductUpdate, ProductResponse
+from models.product import ProductCreate, ProductUpdate, ProductResponse
 from routes.products import router as products_router
 from middleware.logging import setup_logging
 from middleware.metrics import setup_metrics
@@ -131,10 +131,11 @@ async def global_exception_handler(request, exc):
     )
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 3002))
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8080,
+        port=port,
         reload=os.getenv("ENVIRONMENT") == "development",
         log_level="info"
     )

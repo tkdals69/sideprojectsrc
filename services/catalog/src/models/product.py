@@ -8,7 +8,7 @@ class ProductBase(BaseModel):
     """Base product model with common fields"""
     name: str = Field(..., min_length=1, max_length=255, description="Product name")
     description: Optional[str] = Field(None, max_length=2000, description="Product description")
-    price: Decimal = Field(..., gt=0, decimal_places=2, description="Product price")
+    price: Decimal = Field(..., gt=0, description="Product price")
     image_url: Optional[str] = Field(None, max_length=500, description="Product image URL")
     category: Optional[str] = Field(None, max_length=100, description="Product category")
     brand: Optional[str] = Field(None, max_length=100, description="Product brand")
@@ -35,7 +35,7 @@ class ProductUpdate(BaseModel):
     """Model for updating a product"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=2000)
-    price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
+    price: Optional[Decimal] = Field(None, gt=0)
     image_url: Optional[str] = Field(None, max_length=500)
     category: Optional[str] = Field(None, max_length=100)
     brand: Optional[str] = Field(None, max_length=100)
@@ -87,7 +87,7 @@ class ProductSearchParams(BaseModel):
     page: int = Field(1, ge=1, description="Page number")
     per_page: int = Field(20, ge=1, le=100, description="Items per page")
     sort_by: Optional[str] = Field("created_at", description="Sort field")
-    sort_order: Optional[str] = Field("desc", regex="^(asc|desc)$", description="Sort order")
+    sort_order: Optional[str] = Field("desc", pattern="^(asc|desc)$", description="Sort order")
 
     @validator('min_price', 'max_price')
     def validate_price_range(cls, v):

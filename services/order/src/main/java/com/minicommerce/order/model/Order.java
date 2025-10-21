@@ -1,5 +1,6 @@
 package com.minicommerce.order.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -26,20 +27,19 @@ public class Order {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status = OrderStatus.PENDING;
+    private OrderStatus status = OrderStatus.pending;
     
-    @Positive
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "saga_state")
-    private SagaState sagaState = SagaState.ORCHESTRATING;
+    private SagaState sagaState = SagaState.orchestrating;
     
-    @Column(name = "shipping_address", columnDefinition = "jsonb")
+    @Column(name = "shipping_address")
     private String shippingAddress;
     
-    @Column(name = "billing_address", columnDefinition = "jsonb")
+    @Column(name = "billing_address")
     private String billingAddress;
     
     @CreationTimestamp
@@ -51,6 +51,7 @@ public class Order {
     private LocalDateTime updatedAt;
     
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<OrderItem> items = new ArrayList<>();
     
     // Constructors

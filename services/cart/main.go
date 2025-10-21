@@ -30,6 +30,13 @@ func main() {
 		logrus.Fatal("Failed to initialize database:", err)
 	}
 	defer db.Close()
+	
+	// Set global DB variable
+	models.DB = db
+	
+	// Initialize cart repository
+	cartRepo := models.NewCartRepository(db)
+	handlers.SetCartRepository(cartRepo)
 
 	// Setup Gin router
 	router := setupRouter()
@@ -67,6 +74,7 @@ func setupRouter() *gin.Engine {
 
 	// API routes
 	api := router.Group("/api/cart")
+	api.Use(middleware.AuthMiddleware()) // Enable authentication
 	{
 		// Cart management
 		api.GET("/", handlers.GetCart)

@@ -1,0 +1,31 @@
+{
+  "name": "sideprojectsrc",
+  "version": "1.0.0",
+  "description": "**마이크로서비스 아키텍처 기반 이커머스 시스템**",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tkdals69/sideprojectsrc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tkdals69/sideprojectsrc/issues"
+  },
+  "homepage": "https://github.com/tkdals69/sideprojectsrc#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  },
+  "dependencies": {
+    "playwright": "^1.56.1",
+    "playwright-core": "^1.56.1"
+  }
+}

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"cart-service/models"
@@ -13,7 +14,11 @@ import (
 var cartRepo *models.CartRepository
 
 func init() {
-	cartRepo = models.NewCartRepository(models.DB)
+	// cartRepo will be set by SetCartRepository
+}
+
+func SetCartRepository(repo *models.CartRepository) {
+	cartRepo = repo
 }
 
 // GetCart retrieves the user's cart with items
@@ -24,15 +29,23 @@ func GetCart(c *gin.Context) {
 		return
 	}
 
+	// Get cart with items
 	cart, err := cartRepo.GetCartWithItems(userID)
 	if err != nil {
 		logrus.Error("Failed to get cart:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve cart"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get cart"})
 		return
 	}
 
+	// Calculate total
+	var total float64
+	for _, item := range cart.Items {
+		total += item.ProductPrice * float64(item.Quantity)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"cart": cart,
+		"items": cart.Items,
+		"total": total,
 	})
 }
 
@@ -46,9 +59,12 @@ func AddItem(c *gin.Context) {
 
 	var req models.AddItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		logrus.Error("Failed to bind JSON:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
 		return
 	}
+
+	logrus.Info("AddItem request:", req)
 
 	// Get or create cart
 	cart, err := cartRepo.GetOrCreateCart(userID)
@@ -73,7 +89,7 @@ func AddItem(c *gin.Context) {
 
 // UpdateItem updates the quantity of an item in the cart
 func UpdateItem(c *gin.Context) {
-	userID, err := getUserIDFromContext(c)
+	_, err := getUserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -111,7 +127,7 @@ func UpdateItem(c *gin.Context) {
 
 // RemoveItem removes an item from the cart
 func RemoveItem(c *gin.Context) {
-	userID, err := getUserIDFromContext(c)
+	_, err := getUserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -230,15 +246,16 @@ func GetCartItemCount(c *gin.Context) {
 
 // getUserIDFromContext extracts user ID from JWT token in context
 func getUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
-	userIDStr, exists := c.Get("user_id")
+	userIDStr, exists := c.Get("userID")
 	if !exists {
-		return uuid.Nil, gin.Error{Err: nil, Type: gin.ErrorTypePublic}
+		return uuid.Nil, fmt.Errorf("user ID not found in context")
 	}
-
+	
 	userID, err := uuid.Parse(userIDStr.(string))
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("invalid user ID format: %v", err)
 	}
-
+	
+	logrus.Info("Extracted user ID from JWT:", userID.String())
 	return userID, nil
 }

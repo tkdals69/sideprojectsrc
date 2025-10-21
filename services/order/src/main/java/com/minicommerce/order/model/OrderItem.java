@@ -1,5 +1,6 @@
 package com.minicommerce.order.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -19,6 +20,7 @@ public class OrderItem {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
+    @JsonIgnore
     private Order order;
     
     @NotNull
@@ -33,11 +35,9 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
     
-    @Positive
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
     
-    @Positive
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
     
@@ -52,8 +52,8 @@ public class OrderItem {
         this.productId = productId;
         this.productName = productName;
         this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        this.unitPrice = unitPrice != null ? unitPrice : BigDecimal.ZERO;
+        this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
     
     // Getters and Setters

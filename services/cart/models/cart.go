@@ -58,6 +58,7 @@ func (r *CartRepository) GetOrCreateCart(userID uuid.UUID) (*Cart, error) {
 	// Try to get existing cart
 	cart, err := r.GetCartByUserID(userID)
 	if err == nil && cart != nil {
+		logrus.Info("Found existing cart for user:", userID.String())
 		return cart, nil
 	}
 
@@ -69,16 +70,17 @@ func (r *CartRepository) GetOrCreateCart(userID uuid.UUID) (*Cart, error) {
 		RETURNING id, user_id, created_at, updated_at
 	`
 
-	var cart Cart
+	var newCart Cart
 	err = r.db.QueryRow(query, cartID, userID).Scan(
-		&cart.ID, &cart.UserID, &cart.CreatedAt, &cart.UpdatedAt,
+		&newCart.ID, &newCart.UserID, &newCart.CreatedAt, &newCart.UpdatedAt,
 	)
 	if err != nil {
 		logrus.Error("Failed to create cart:", err)
 		return nil, err
 	}
 
-	return &cart, nil
+	logrus.Info("Created new cart for user:", userID.String())
+	return &newCart, nil
 }
 
 func (r *CartRepository) GetCartByUserID(userID uuid.UUID) (*Cart, error) {
@@ -96,12 +98,14 @@ func (r *CartRepository) GetCartByUserID(userID uuid.UUID) (*Cart, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			logrus.Info("No cart found for user:", userID.String())
 			return nil, nil
 		}
 		logrus.Error("Failed to get cart:", err)
 		return nil, err
 	}
 
+	logrus.Info("Found cart for user:", userID.String())
 	return &cart, nil
 }
 

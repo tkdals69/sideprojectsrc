@@ -16,21 +16,21 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
-COPY src/ ./src/
+COPY src/ ./
 
 # Change ownership to appuser
 RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Expose port
-EXPOSE 8080
+EXPOSE 3007
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:8080/health')"
+  CMD python -c "import requests; requests.get('http://localhost:${PORT:-3007}/health')"
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-3007}"]

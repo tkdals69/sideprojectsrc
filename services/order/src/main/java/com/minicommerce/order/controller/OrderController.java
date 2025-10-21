@@ -1,5 +1,6 @@
 package com.minicommerce.order.controller;
 
+import com.minicommerce.order.dto.OrderDTO;
 import com.minicommerce.order.model.Order;
 import com.minicommerce.order.model.OrderStatus;
 import com.minicommerce.order.service.OrderService;
@@ -31,11 +32,13 @@ public class OrderController {
      * Create a new order
      */
     @PostMapping
-    public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+    public ResponseEntity<OrderDTO> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         try {
             logger.info("Creating order for user: {}", request.getUserId());
             Order order = orderService.createOrder(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(order);
+            logger.info("Order created successfully with ID: {}", order.getId());
+            OrderDTO orderDTO = new OrderDTO(order);
+            return ResponseEntity.status(HttpStatus.CREATED).body(orderDTO);
         } catch (Exception e) {
             logger.error("Failed to create order", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -46,11 +49,12 @@ public class OrderController {
      * Get order by ID
      */
     @GetMapping("/{orderId}")
-    public ResponseEntity<Order> getOrder(@PathVariable UUID orderId) {
+    public ResponseEntity<OrderDTO> getOrder(@PathVariable UUID orderId) {
         try {
             Optional<Order> order = orderService.getOrderById(orderId);
             if (order.isPresent()) {
-                return ResponseEntity.ok(order.get());
+                OrderDTO orderDTO = new OrderDTO(order.get());
+                return ResponseEntity.ok(orderDTO);
             } else {
                 return ResponseEntity.notFound().build();
             }
@@ -64,10 +68,13 @@ public class OrderController {
      * Get orders by user ID
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable UUID userId) {
+    public ResponseEntity<List<OrderDTO>> getOrdersByUser(@PathVariable UUID userId) {
         try {
             List<Order> orders = orderService.getOrdersByUserId(userId);
-            return ResponseEntity.ok(orders);
+            List<OrderDTO> orderDTOs = orders.stream()
+                    .map(OrderDTO::new)
+                    .collect(java.util.stream.Collectors.toList());
+            return ResponseEntity.ok(orderDTOs);
         } catch (Exception e) {
             logger.error("Failed to get orders for user: {}", userId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -78,12 +85,13 @@ public class OrderController {
      * Update order status
      */
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<Order> updateOrderStatus(
+    public ResponseEntity<OrderDTO> updateOrderStatus(
             @PathVariable UUID orderId,
             @RequestParam OrderStatus status) {
         try {
             Order order = orderService.updateOrderStatus(orderId, status);
-            return ResponseEntity.ok(order);
+            OrderDTO orderDTO = new OrderDTO(order);
+            return ResponseEntity.ok(orderDTO);
         } catch (RuntimeException e) {
             logger.error("Failed to update order status: {}", orderId, e);
             return ResponseEntity.notFound().build();
@@ -97,12 +105,13 @@ public class OrderController {
      * Cancel order
      */
     @PutMapping("/{orderId}/cancel")
-    public ResponseEntity<Order> cancelOrder(
+    public ResponseEntity<OrderDTO> cancelOrder(
             @PathVariable UUID orderId,
             @RequestParam(required = false) String reason) {
         try {
             Order order = orderService.cancelOrder(orderId, reason);
-            return ResponseEntity.ok(order);
+            OrderDTO orderDTO = new OrderDTO(order);
+            return ResponseEntity.ok(orderDTO);
         } catch (RuntimeException e) {
             logger.error("Failed to cancel order: {}", orderId, e);
             return ResponseEntity.badRequest().build();

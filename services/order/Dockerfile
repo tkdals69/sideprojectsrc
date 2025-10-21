@@ -1,5 +1,5 @@
-# Use OpenJDK 17 Alpine as base image
-FROM openjdk:17-jdk-alpine AS builder
+# Use Eclipse Temurin 17 Alpine as base image
+FROM eclipse-temurin:17-jdk-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -20,7 +20,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Final stage
-FROM openjdk:17-jre-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 # Install runtime dependencies
 RUN apk add --no-cache \

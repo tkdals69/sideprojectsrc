@@ -57,6 +57,19 @@ class NotificationUpdate(BaseModel):
     status: Optional[NotificationStatus] = None
     sent_at: Optional[datetime] = None
 
+class Notification(NotificationBase):
+    """Model for notification entity"""
+    id: uuid.UUID
+    created_at: datetime
+    sent_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+        json_encoders = {
+            uuid.UUID: str,
+            datetime: lambda v: v.isoformat()
+        }
+
 class NotificationResponse(NotificationBase):
     """Model for notification response"""
     id: uuid.UUID
@@ -98,7 +111,7 @@ class NotificationSearchParams(BaseModel):
     page: int = Field(1, ge=1, description="Page number")
     per_page: int = Field(20, ge=1, le=100, description="Items per page")
     sort_by: Optional[str] = Field("created_at", description="Sort field")
-    sort_order: Optional[str] = Field("desc", regex="^(asc|desc)$", description="Sort order")
+    sort_order: Optional[str] = Field("desc", pattern="^(asc|desc)$", description="Sort order")
 
     @validator('sort_by')
     def validate_sort_by(cls, v):

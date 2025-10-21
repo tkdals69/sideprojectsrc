@@ -1,8 +1,8 @@
 package com.minicommerce.order.model;
 
 public enum SagaState {
-    ORCHESTRATING,
-    COMPENSATING,
-    COMPLETED,
-    FAILED
+    orchestrating,
+    compensating,
+    completed,
+    failed
 }

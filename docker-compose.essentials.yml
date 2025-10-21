@@ -30,6 +30,11 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=mini_commerce
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
       - JWT_SECRET=your-super-secret-jwt-key-here
       - JWT_EXPIRES_IN=24h
@@ -48,10 +53,15 @@ services:
       dockerfile: Dockerfile
     container_name: mini-commerce-catalog
     environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=mini_commerce
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
       - PORT=3002
     ports:
-      - "3002:3002"
+      - "3002:8080"
     networks:
       - mini-commerce-network
     depends_on:
@@ -65,7 +75,11 @@ services:
       dockerfile: Dockerfile
     container_name: mini-commerce-cart
     environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - DB_HOST=mini-commerce-postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=mini_commerce
       - PORT=3003
     ports:
       - "3003:3003"
@@ -83,9 +97,12 @@ services:
     container_name: mini-commerce-order
     environment:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mini_commerce
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
       - PORT=3004
     ports:
-      - "3004:3004"
+      - "3004:8080"
     networks:
       - mini-commerce-network
     depends_on:
@@ -99,7 +116,11 @@ services:
       dockerfile: Dockerfile
     container_name: mini-commerce-inventory
     environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=mini_commerce
       - PORT=3005
     ports:
       - "3005:3005"
@@ -109,19 +130,6 @@ services:
       - postgres
     restart: unless-stopped
 
-  # Payment Service (Node.js)
-  payment-service:
-    build:
-      context: ./services/payment-mock
-      dockerfile: Dockerfile
-    container_name: mini-commerce-payment
-    environment:
-      - PORT=3006
-    ports:
-      - "3006:3006"
-    networks:
-      - mini-commerce-network
-    restart: unless-stopped
 
   # Notification Service (Python)
   notification-service:
@@ -131,6 +139,11 @@ services:
     container_name: mini-commerce-notification
     environment:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/mini_commerce
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=mini_commerce
       - PORT=3007
     ports:
       - "3007:3007"
@@ -166,11 +179,26 @@ services:
       - cart-service
       - order-service
       - inventory-service
-      - payment-service
+      - mini-commerce-payment
       - notification-service
     restart: unless-stopped
 
   # Frontend (Node.js/React)
+  # Payment Service
+  mini-commerce-payment:
+    build:
+      context: ./services/payment
+      dockerfile: Dockerfile
+    container_name: mini-commerce-payment
+    ports:
+      - "3006:3005"
+    environment:
+      - NODE_ENV=production
+      - PORT=3005
+    networks:
+      - mini-commerce-network
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend

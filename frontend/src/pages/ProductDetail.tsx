@@ -1,179 +1,193 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
-import { catalogApi } from '../services/api';
-import { useCartStore } from '../store/cartStore';
-import { Star, ShoppingCart, ArrowLeft, Plus, Minus } from 'lucide-react';
-import LoadingSpinner from '../components/LoadingSpinner';
-import toast from 'react-hot-toast';
+import { useParams } from 'react-router-dom';
+import { Star, Heart, Share, ShoppingCart, Plus, Minus } from 'lucide-react';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
-  const { addItem, isLoading: isAddingToCart } = useCartStore();
+  const [selectedImage, setSelectedImage] = useState(0);
 
-  const { data: product, isLoading, error } = useQuery(
-    ['product', id],
-    () => catalogApi.getProduct(id!),
-    {
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    }
-  );
-
-  const handleAddToCart = async () => {
-    if (!product?.data) return;
-    
-    try {
-      await addItem(product.data.id, quantity);
-      toast.success('Added to cart!');
-    } catch (error) {
-      toast.error('Failed to add to cart');
-    }
+  // Sample product data
+  const product = {
+    id: id || '1',
+    name: 'Sample Product',
+    price: 49.99,
+    originalPrice: 69.99,
+    rating: 4.5,
+    reviewCount: 128,
+    description: 'This is a sample product description. It includes detailed information about the product features, specifications, and benefits.',
+    features: [
+      'High-quality materials',
+      'Durable construction',
+      'Easy to use',
+      'Great value for money',
+    ],
+    images: ['/placeholder.jpg', '/placeholder.jpg', '/placeholder.jpg'],
+    inStock: true,
+    stockCount: 15,
   };
 
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1 && newQuantity <= (product?.data?.stock || 0)) {
-      setQuantity(newQuantity);
-    }
+  const handleAddToCart = () => {
+    alert(`Added ${quantity} item(s) to cart!`);
   };
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (error || !product?.data) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product not found</h2>
-          <p className="text-gray-600 mb-4">The product you're looking for doesn't exist.</p>
-          <button
-            onClick={() => navigate('/products')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Back to Products
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const productData = product.data;
+  const handleBuyNow = () => {
+    alert('Proceeding to checkout...');
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate('/products')}
-        className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeft className="h-5 w-5 mr-2" />
-        Back to Products
-      </button>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Product Image */}
-        <div className="aspect-w-16 aspect-h-9">
-          <img
-            src={productData.imageUrl || '/placeholder-product.jpg'}
-            alt={productData.name}
-            className="w-full h-96 object-cover rounded-lg"
-          />
+        {/* Product Images */}
+        <div>
+          <div className="aspect-square bg-gray-200 rounded-lg mb-4">
+            {/* Main image placeholder */}
+            <div className="w-full h-full flex items-center justify-center text-gray-500">
+              Product Image {selectedImage + 1}
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            {product.images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setSelectedImage(index)}
+                className={`w-16 h-16 bg-gray-200 rounded-md ${
+                  selectedImage === index ? 'ring-2 ring-blue-500' : ''
+                }`}
+              >
+                <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+                  {index + 1}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Product Info */}
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{productData.name}</h1>
-            <div className="flex items-center mb-4">
-              {productData.rating && (
-                <div className="flex items-center mr-4">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <span className="ml-1 text-sm text-gray-600">{productData.rating}</span>
-                </div>
-              )}
-              <span className="text-sm text-gray-500">{productData.category}</span>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+          
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="flex items-center">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-5 w-5 ${
+                    i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                  }`}
+                />
+              ))}
+              <span className="ml-2 text-sm text-gray-600">
+                {product.rating} ({product.reviewCount} reviews)
+              </span>
             </div>
-            <p className="text-gray-600">{productData.description}</p>
           </div>
 
-          <div className="border-t pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-3xl font-bold text-blue-600">
-                ${productData.price.toFixed(2)}
+          <div className="flex items-center space-x-4 mb-6">
+            <span className="text-3xl font-bold text-gray-900">${product.price}</span>
+            {product.originalPrice && (
+              <span className="text-xl text-gray-500 line-through">${product.originalPrice}</span>
+            )}
+            {product.originalPrice && (
+              <span className="bg-red-100 text-red-800 text-sm font-medium px-2 py-1 rounded">
+                Save ${(product.originalPrice - product.price).toFixed(2)}
               </span>
-              <span className={`text-sm font-medium ${
-                productData.stock > 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {productData.stock > 0 ? `In Stock (${productData.stock} available)` : 'Out of Stock'}
-              </span>
-            </div>
-
-            {productData.stock > 0 && (
-              <div className="space-y-4">
-                {/* Quantity Selector */}
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm font-medium text-gray-700">Quantity:</span>
-                  <div className="flex items-center border border-gray-300 rounded-md">
-                    <button
-                      onClick={() => handleQuantityChange(quantity - 1)}
-                      disabled={quantity <= 1}
-                      className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="px-4 py-2 border-x border-gray-300 min-w-[3rem] text-center">
-                      {quantity}
-                    </span>
-                    <button
-                      onClick={() => handleQuantityChange(quantity + 1)}
-                      disabled={quantity >= productData.stock}
-                      className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Add to Cart Button */}
-                <button
-                  onClick={handleAddToCart}
-                  disabled={isAddingToCart}
-                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {isAddingToCart ? (
-                    <LoadingSpinner size="sm" />
-                  ) : (
-                    <>
-                      <ShoppingCart className="h-5 w-5 mr-2" />
-                      Add to Cart
-                    </>
-                  )}
-                </button>
-              </div>
             )}
           </div>
 
-          {/* Product Details */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>Category:</span>
-                <span className="capitalize">{productData.category}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Stock:</span>
-                <span>{productData.stock} available</span>
-              </div>
-              <div className="flex justify-between">
-                <span>SKU:</span>
-                <span>{productData.id.substring(0, 8)}</span>
+          <p className="text-gray-600 mb-6">{product.description}</p>
+
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Features:</h3>
+            <ul className="list-disc list-inside space-y-1 text-gray-600">
+              {product.features.map((feature, index) => (
+                <li key={index}>{feature}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mb-6">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm font-medium text-gray-700">Quantity:</span>
+              <div className="flex items-center border border-gray-300 rounded-md">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="p-2 hover:bg-gray-50"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="px-4 py-2 border-x border-gray-300">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="p-2 hover:bg-gray-50"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
             </div>
+            <p className="text-sm text-gray-600 mt-2">
+              {product.inStock ? `${product.stockCount} in stock` : 'Out of stock'}
+            </p>
           </div>
+
+          <div className="flex space-x-4 mb-6">
+            <button
+              onClick={handleAddToCart}
+              disabled={!product.inStock}
+              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              <span>Add to Cart</span>
+            </button>
+            <button
+              onClick={handleBuyNow}
+              disabled={!product.inStock}
+              className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Buy Now
+            </button>
+          </div>
+
+          <div className="flex space-x-4">
+            <button className="flex items-center space-x-2 text-gray-600 hover:text-gray-800">
+              <Heart className="h-5 w-5" />
+              <span>Add to Wishlist</span>
+            </button>
+            <button className="flex items-center space-x-2 text-gray-600 hover:text-gray-800">
+              <Share className="h-5 w-5" />
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Reviews Section */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+        <div className="space-y-4">
+          {[1, 2, 3].map((review) => (
+            <div key={review} className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center space-x-4 mb-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Customer {review}</h4>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600">
+                This is a sample review for the product. The customer is very satisfied with their purchase.
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

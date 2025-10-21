@@ -15,7 +15,7 @@ const notificationRoutes = require('./routes/notification');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/requestLogger');
 const { authMiddleware } = require('./middleware/auth');
-const { rateLimitMiddleware } = require('./middleware/rateLimit');
+const { globalRateLimit } = require('./middleware/rateLimit');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -65,7 +65,7 @@ app.use(cors({
 }));
 
 // Global rate limiting
-app.use(rateLimitMiddleware);
+app.use(globalRateLimit);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

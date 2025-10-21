@@ -1,167 +1,164 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+// Direct service URLs (since API Gateway is not running)
+const AUTH_API_URL = 'http://localhost:3001';
+const CATALOG_API_URL = 'http://localhost:3002';
+const CART_API_URL = 'http://localhost:3003';
+const ORDER_API_URL = 'http://localhost:3004';
+const INVENTORY_API_URL = 'http://localhost:3005';
+const PAYMENT_API_URL = 'http://localhost:3006';
 
-// Create axios instance
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// Create axios instances for each service
+const createApiInstance = (baseURL: string) => {
+  const instance = axios.create({
+    baseURL,
+    timeout: 10000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const { token } = useAuthStore.getState();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  // Request interceptor to add auth token
+  instance.interceptors.request.use(
+    (config) => {
+      const { token } = useAuthStore.getState();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  );
 
-// Response interceptor to handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+  // Response interceptor to handle auth errors
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
-);
+  );
+
+  return instance;
+};
+
+// Create API instances
+const authApiInstance = createApiInstance(AUTH_API_URL);
+const catalogApiInstance = createApiInstance(CATALOG_API_URL);
+const cartApiInstance = createApiInstance(CART_API_URL);
+const orderApiInstance = createApiInstance(ORDER_API_URL);
+const inventoryApiInstance = createApiInstance(INVENTORY_API_URL);
+const paymentApiInstance = createApiInstance(PAYMENT_API_URL);
 
 // Auth API
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post('/api/auth/login', { email, password }),
+    authApiInstance.post('/api/auth/login', { email, password }),
   
   register: (userData: any) =>
-    api.post('/api/auth/register', userData),
+    authApiInstance.post('/api/auth/register', userData),
   
   logout: () =>
-    api.post('/api/auth/logout'),
+    authApiInstance.post('/api/auth/logout'),
   
   getProfile: () =>
-    api.get('/api/auth/profile'),
+    authApiInstance.get('/api/auth/profile'),
   
   updateProfile: (userData: any) =>
-    api.put('/api/auth/profile', userData),
+    authApiInstance.put('/api/auth/profile', userData),
 };
 
 // Catalog API
 export const catalogApi = {
   getProducts: (params?: any) =>
-    api.get('/api/catalog', { params }),
+    catalogApiInstance.get('/api/catalog', { params }),
   
   getProduct: (id: string) =>
-    api.get(`/api/catalog/${id}`),
+    catalogApiInstance.get(`/api/catalog/${id}`),
   
   searchProducts: (query: string, filters?: any) =>
-    api.get('/api/bff/search', { params: { q: query, ...filters } }),
+    catalogApiInstance.get('/api/catalog/search', { params: { q: query, ...filters } }),
 };
 
 // Cart API
 export const cartApi = {
   getCart: () =>
-    api.get('/api/cart'),
+    cartApiInstance.get('/api/cart'),
   
   addItem: (productId: string, quantity: number) =>
-    api.post('/api/cart/items', { product_id: productId, quantity }),
+    cartApiInstance.post('/api/cart/items', { product_id: productId, quantity }),
   
   updateItem: (itemId: string, quantity: number) =>
-    api.put(`/api/cart/items/${itemId}`, { quantity }),
+    cartApiInstance.put(`/api/cart/items/${itemId}`, { quantity }),
   
   removeItem: (itemId: string) =>
-    api.delete(`/api/cart/items/${itemId}`),
+    cartApiInstance.delete(`/api/cart/items/${itemId}`),
   
   clearCart: () =>
-    api.delete('/api/cart'),
+    cartApiInstance.delete('/api/cart'),
   
   getItemCount: () =>
-    api.get('/api/cart/count'),
+    cartApiInstance.get('/api/cart/count'),
 };
 
 // Order API
 export const orderApi = {
   getOrders: () =>
-    api.get('/api/orders'),
+    orderApiInstance.get('/api/orders'),
   
   getOrder: (id: string) =>
-    api.get(`/api/orders/${id}`),
+    orderApiInstance.get(`/api/orders/${id}`),
   
   createOrder: (orderData: any) =>
-    api.post('/api/orders', orderData),
+    orderApiInstance.post('/api/orders', orderData),
   
   cancelOrder: (id: string, reason?: string) =>
-    api.put(`/api/orders/${id}/cancel`, { reason }),
+    orderApiInstance.put(`/api/orders/${id}/cancel`, { reason }),
 };
 
 // Inventory API
 export const inventoryApi = {
   getInventory: () =>
-    api.get('/api/inventory'),
+    inventoryApiInstance.get('/api/inventory'),
   
   getProductInventory: (productId: string) =>
-    api.get(`/api/inventory/${productId}`),
+    inventoryApiInstance.get(`/api/inventory/${productId}`),
   
   getStockStatus: (productId: string) =>
-    api.get(`/api/inventory/${productId}/status`),
+    inventoryApiInstance.get(`/api/inventory/${productId}/status`),
 };
 
 // Payment API
 export const paymentApi = {
   processPayment: (paymentData: any) =>
-    api.post('/api/payment/process', paymentData),
+    paymentApiInstance.post('/api/payment/process', paymentData),
   
   getPaymentStatus: (paymentId: string) =>
-    api.get(`/api/payment/status/${paymentId}`),
+    paymentApiInstance.get(`/api/payment/status/${paymentId}`),
   
   refundPayment: (paymentId: string, amount?: number, reason?: string) =>
-    api.post('/api/payment/refund', { paymentId, amount, reason }),
+    paymentApiInstance.post('/api/payment/refund', { paymentId, amount, reason }),
 };
 
-// Notification API
+// Notification API (using auth service for now)
 export const notificationApi = {
   getNotifications: (params?: any) =>
-    api.get('/api/notifications', { params }),
+    authApiInstance.get('/api/notifications', { params }),
   
   getNotification: (id: string) =>
-    api.get(`/api/notifications/${id}`),
+    authApiInstance.get(`/api/notifications/${id}`),
   
   markAsRead: (id: string) =>
-    api.put(`/api/notifications/${id}`, { status: 'read' }),
+    authApiInstance.put(`/api/notifications/${id}`, { status: 'read' }),
   
   deleteNotification: (id: string) =>
-    api.delete(`/api/notifications/${id}`),
+    authApiInstance.delete(`/api/notifications/${id}`),
 };
 
-// BFF API
-export const bffApi = {
-  getDashboard: () =>
-    api.get('/api/bff/dashboard'),
-  
-  getProductDetails: (productId: string) =>
-    api.get(`/api/bff/products/${productId}/details`),
-  
-  createOrder: (orderData: any) =>
-    api.post('/api/bff/orders', orderData),
-  
-  checkoutCart: (checkoutData: any) =>
-    api.post('/api/bff/cart/checkout', checkoutData),
-  
-  getProfile: () =>
-    api.get('/api/bff/profile'),
-  
-  getHealth: () =>
-    api.get('/api/bff/health'),
-};
-
-export default api;
+export default authApiInstance;

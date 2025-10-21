@@ -1,5 +1,6 @@
 package com.minicommerce.order.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.minicommerce.order.model.Order;
 import com.minicommerce.order.model.OrderItem;
 import com.minicommerce.order.model.OrderStatus;
@@ -24,8 +25,8 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
     
-    @Autowired
-    private SagaOrchestrator sagaOrchestrator;
+    // @Autowired
+    // private SagaOrchestrator sagaOrchestrator;
     
     /**
      * Create a new order and start the saga process
@@ -36,10 +37,10 @@ public class OrderService {
         // Create order
         Order order = new Order();
         order.setUserId(request.getUserId());
-        order.setTotalAmount(request.getTotalAmount());
+        order.setTotalAmount(request.getTotalAmount() != null ? request.getTotalAmount() : BigDecimal.ZERO);
         order.setShippingAddress(request.getShippingAddress());
         order.setBillingAddress(request.getBillingAddress());
-        order.setStatus(OrderStatus.PENDING);
+        order.setStatus(OrderStatus.pending);
         
         // Add order items
         for (OrderItemRequest itemRequest : request.getItems()) {
@@ -54,20 +55,64 @@ public class OrderService {
         
         // Save order
         Order savedOrder = orderRepository.save(order);
+        
+        // Flush to ensure all items are persisted
+        orderRepository.flush();
+        
         logger.info("Order created with ID: {}", savedOrder.getId());
         
-        // Start saga process
-        sagaOrchestrator.startOrderSaga(savedOrder);
+        // Send notification
+        sendOrderNotification(savedOrder);
         
-        return savedOrder;
+        // Start saga process
+        // sagaOrchestrator.startOrderSaga(savedOrder);
+        
+        // Return the order with items loaded
+        return orderRepository.findWithItemsById(savedOrder.getId()).orElse(savedOrder);
     }
     
+    /**
+     * Send order notification
+     */
+    private void sendOrderNotification(Order order) {
+        try {
+            // HTTP client to send notification
+            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+            
+            String notificationUrl = "http://mini-commerce-notification:3007/api/notify/";
+            String requestBody = String.format(
+                "{\"user_id\":\"%s\",\"order_id\":\"%s\",\"type\":\"order_created\",\"title\":\"주문이 생성되었습니다\",\"message\":\"주문번호: %s가 성공적으로 생성되었습니다.\",\"channel\":\"email\",\"status\":\"pending\"}",
+                order.getUserId(),
+                order.getId(),
+                order.getId()
+            );
+            
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create(notificationUrl))
+                .header("Content-Type", "application/json")
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+                
+            client.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
+                .thenAccept(response -> {
+                    logger.info("Notification sent successfully for order: {}", order.getId());
+                })
+                .exceptionally(throwable -> {
+                    logger.error("Failed to send notification for order: {}", order.getId(), throwable);
+                    return null;
+                });
+                
+        } catch (Exception e) {
+            logger.error("Error sending notification for order: {}", order.getId(), e);
+        }
+    }
+
     /**
      * Get order by ID
      */
     @Transactional(readOnly = true)
     public Optional<Order> getOrderById(UUID orderId) {
-        return orderRepository.findById(orderId);
+        return orderRepository.findWithItemsById(orderId);
     }
     
     /**
@@ -96,11 +141,11 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
         
-        if (order.getStatus() == OrderStatus.COMPLETED) {
+        if (order.getStatus() == OrderStatus.completed) {
             throw new RuntimeException("Cannot cancel completed order");
         }
         
-        order.setStatus(OrderStatus.CANCELLED);
+        order.setStatus(OrderStatus.cancelled);
         Order savedOrder = orderRepository.save(order);
         
         logger.info("Order cancelled: {}, reason: {}", orderId, reason);
@@ -113,18 +158,21 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderStatistics getOrderStatistics() {
         long totalOrders = orderRepository.count();
-        long pendingOrders = orderRepository.countByStatus(OrderStatus.PENDING);
-        long completedOrders = orderRepository.countByStatus(OrderStatus.COMPLETED);
-        long failedOrders = orderRepository.countByStatus(OrderStatus.FAILED);
+        long pendingOrders = orderRepository.countByStatus(OrderStatus.pending);
+        long completedOrders = orderRepository.countByStatus(OrderStatus.completed);
+        long failedOrders = orderRepository.countByStatus(OrderStatus.failed);
         
         return new OrderStatistics(totalOrders, pendingOrders, completedOrders, failedOrders);
     }
     
     // Request/Response classes
     public static class CreateOrderRequest {
+        @JsonProperty("user_id")
         private UUID userId;
         private BigDecimal totalAmount;
+        @JsonProperty("shipping_address")
         private String shippingAddress;
+        @JsonProperty("billing_address")
         private String billingAddress;
         private List<OrderItemRequest> items;
         
@@ -142,9 +190,12 @@ public class OrderService {
     }
     
     public static class OrderItemRequest {
+        @JsonProperty("product_id")
         private UUID productId;
+        @JsonProperty("product_name")
         private String productName;
         private Integer quantity;
+        @JsonProperty("unit_price")
         private BigDecimal unitPrice;
         
         // Getters and setters

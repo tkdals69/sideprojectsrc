@@ -5,7 +5,7 @@ from datetime import datetime
 import uuid
 
 from models.product import (
-    Product, ProductCreate, ProductUpdate, ProductResponse, 
+    ProductCreate, ProductUpdate, ProductResponse, 
     ProductListResponse, ProductSearchParams, ProductStats
 )
 from database.connection import get_database
