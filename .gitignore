@@ -157,21 +157,7 @@ coverage/
 local/
 dev/
 
-#test
-tests/*
 
-#docker
-docker-compose.yml
-docker-compose.essentials.yml
-docker-compose.production.yml
-docker-compose.development.yml
-docker-compose.test.yml
-docker-compose.staging.yml
-docker-compose.production.yml
-docker-compose.production.yml   
-
-#k8s
-k8s/*
 
 #etc
 utils/
